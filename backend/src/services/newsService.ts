@@ -68,15 +68,26 @@ const extractTickers = (text: string): string[] => {
 };
 
 const normalizeArticle = (article: Record<string, unknown>): NewsItem | null => {
+  const sourceObject = article.source as Record<string, unknown> | undefined;
   const headline = String(article.title || article.headline || '').trim();
   const summary = String(article.description || article.summary || article.snippet || '').trim();
   const articleUrl = String(article.url || article.link || article.article_url || '').trim();
   if (!headline || !articleUrl) return null;
 
   const source =
-    String((article.source as Record<string, unknown> | undefined)?.name || article.source_name || article.source || 'Market Wire').trim() || 'Market Wire';
+    String(sourceObject?.name || article.source_name || article.source || 'Market Wire').trim() || 'Market Wire';
   const timestamp = String(article.publishedAt || article.pubDate || article.published_at || new Date().toISOString());
-  const image = String(article.logo || article.urlToImage || article.image_url || article.image || '').trim() || undefined;
+  const image = String(
+    article.logo ||
+      article.Logo ||
+      sourceObject?.logo ||
+      sourceObject?.Logo ||
+      article.urlToImage ||
+      article.image_url ||
+      article.image ||
+      article.thumbnail ||
+      ''
+  ).trim() || undefined;
   const mergedText = `${headline} ${summary}`;
   const relatedTickersRaw = Array.isArray(article.symbols) ? article.symbols.map((symbol) => String(symbol)) : extractTickers(mergedText);
   const relatedTickers = relatedTickersRaw.filter(Boolean).slice(0, 3);
