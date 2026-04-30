@@ -45,9 +45,15 @@ const CATEGORY_HINTS: Array<{ category: NewsCategory; hints: string[] }> = [
   { category: 'Markets', hints: ['market', 'equities', 'index', 'trading', 'stocks'] },
 ];
 
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '';
-const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST || '';
-const RAPIDAPI_NEWS_URL = process.env.RAPIDAPI_NEWS_URL || '';
+const getRapidApiConfig = () => {
+  const rapidApiKey = process.env.RAPIDAPI_KEY || '';
+  const rapidApiHost = process.env.RAPIDAPI_HOST || 'news-api14.p.rapidapi.com';
+  const rapidApiNewsUrl = process.env.RAPIDAPI_NEWS_URL || `https://${rapidApiHost}/v2/search/articles`;
+  if (!rapidApiKey) {
+    throw new Error('RAPIDAPI_KEY must be configured.');
+  }
+  return { rapidApiKey, rapidApiHost, rapidApiNewsUrl };
+};
 
 const resolveCategory = (text: string): NewsCategory => {
   const lower = text.toLowerCase();
@@ -88,31 +94,39 @@ const normalizeArticle = (article: Record<string, unknown>): NewsItem | null => 
 };
 
 const rapidApiProvider: NewsProvider = {
-  name: 'rapidapi-newsapi',
+  name: 'rapidapi-news-api14',
   async fetchNews({ query, language, pageSize }) {
-    if (!RAPIDAPI_KEY || !RAPIDAPI_HOST) {
-      throw new Error('RAPIDAPI_KEY and RAPIDAPI_HOST must be configured.');
-    }
-
-    const baseUrl = RAPIDAPI_NEWS_URL || `https://${RAPIDAPI_HOST}/v2/everything`;
-    const response = await axios.get(baseUrl, {
+    const { rapidApiKey, rapidApiHost, rapidApiNewsUrl } = getRapidApiConfig();
+    const response = await axios.get(rapidApiNewsUrl, {
       params: {
-        q: query || DEFAULT_QUERY,
+        query: query || DEFAULT_QUERY,
         language,
-        sortBy: 'publishedAt',
+        sort: 'date',
         pageSize,
       },
       headers: {
-        'x-rapidapi-key': RAPIDAPI_KEY,
-        'x-rapidapi-host': RAPIDAPI_HOST,
+        'x-rapidapi-key': rapidApiKey,
+        'x-rapidapi-host': rapidApiHost,
+        'Content-Type': 'application/json',
       },
       timeout: 12000,
     });
 
     const payload = response.data as Record<string, unknown>;
-    const rawArticles = (Array.isArray(payload.articles) ? payload.articles : Array.isArray(payload.data) ? payload.data : []) as Record<string, unknown>[];
+    const payloadData = payload.data as Record<string, unknown> | undefined;
+    const rawArticles = (
+      Array.isArray(payload.articles)
+        ? payload.articles
+        : Array.isArray(payloadData?.articles)
+          ? payloadData?.articles
+          : Array.isArray(payloadData)
+            ? payloadData
+            : Array.isArray(payload.results)
+              ? payload.results
+              : []
+    ) as Record<string, unknown>[];
 
-    return rawArticles.map(normalizeArticle).filter((item): item is NewsItem => Boolean(item));
+    return rawArticles.map(normalizeArticle).filter((item): item is NewsItem => Boolean(item)).slice(0, pageSize);
   },
 };
 
