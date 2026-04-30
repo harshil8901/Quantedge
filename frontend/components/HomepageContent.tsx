@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowUpRight, ChevronRight, Flame, Newspaper, Search } from 'lucide-react';
+import { ArrowUpRight, ChevronRight, Flame, Newspaper, Search, Sparkles } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Panel from '@/components/ui/Panel';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -57,17 +57,21 @@ async function fetchMarketIndices(): Promise<MarketIndicesResponse> {
 
 const newsroomFilters: NewsCategory[] = ['All', 'Markets', 'Macro', 'Tech', 'Earnings', 'AI', 'Energy'];
 
-const formatRelativeTime = (timestamp: string): string => {
-  const target = new Date(timestamp).getTime();
-  if (!Number.isFinite(target)) return 'Just now';
-  const diffMs = Date.now() - target;
-  const diffMinutes = Math.floor(diffMs / 60000);
-  if (diffMinutes < 1) return 'Just now';
-  if (diffMinutes < 60) return `${diffMinutes} min ago`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+const categoryVisuals: Record<NewsCategory, string> = {
+  All: 'radial-gradient(circle_at_15%_10%,rgba(79,140,255,0.34),transparent 45%),radial-gradient(circle_at_80%_80%,rgba(0,200,150,0.2),transparent 52%),#0B1120',
+  Markets: 'radial-gradient(circle_at_15%_10%,rgba(79,140,255,0.34),transparent 45%),radial-gradient(circle_at_85%_80%,rgba(118,143,255,0.2),transparent 55%),#0B1120',
+  Macro: 'radial-gradient(circle_at_10%_10%,rgba(245,185,66,0.3),transparent 45%),radial-gradient(circle_at_85%_80%,rgba(79,140,255,0.2),transparent 55%),#0B1120',
+  Tech: 'radial-gradient(circle_at_10%_10%,rgba(79,140,255,0.35),transparent 45%),radial-gradient(circle_at_85%_80%,rgba(167,139,250,0.24),transparent 55%),#0B1120',
+  Earnings: 'radial-gradient(circle_at_10%_10%,rgba(0,200,150,0.3),transparent 45%),radial-gradient(circle_at_85%_80%,rgba(79,140,255,0.2),transparent 55%),#0B1120',
+  AI: 'radial-gradient(circle_at_10%_10%,rgba(167,139,250,0.34),transparent 45%),radial-gradient(circle_at_85%_80%,rgba(79,140,255,0.2),transparent 55%),#0B1120',
+  Energy: 'radial-gradient(circle_at_10%_10%,rgba(245,185,66,0.32),transparent 45%),radial-gradient(circle_at_85%_80%,rgba(0,200,150,0.18),transparent 55%),#0B1120',
+};
+
+const getNewsVisualStyle = (item: NewsItem) => {
+  if (item.image) {
+    return `linear-gradient(to bottom, rgba(5,8,22,0.18), rgba(5,8,22,0.68)), url(${item.image})`;
+  }
+  return categoryVisuals[item.category] || categoryVisuals.All;
 };
 
 async function fetchMarketNews(params: { category: NewsCategory; search: string }): Promise<NewsResponse> {
@@ -400,14 +404,12 @@ export default function HomepageContent() {
                     <a href={item.articleUrl} target="_blank" rel="noreferrer" className="block">
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8EA0BA]">{item.category}</p>
-                        <p className="text-xs text-[#8EA0BA]">{formatRelativeTime(item.timestamp)}</p>
+                        <Sparkles size={12} className="text-[#8EA0BA]" />
                       </div>
-                      {item.image ? (
-                        <div
-                          className="mb-3 h-24 w-full rounded-lg border border-white/[0.08] bg-cover bg-center"
-                          style={{ backgroundImage: `linear-gradient(to bottom, rgba(5,8,22,0.2), rgba(5,8,22,0.65)), url(${item.image})` }}
-                        />
-                      ) : null}
+                      <div
+                        className="mb-3 h-24 w-full rounded-lg border border-white/[0.08] bg-cover bg-center"
+                        style={{ backgroundImage: getNewsVisualStyle(item) }}
+                      />
                       <p className="text-[15px] font-semibold leading-6 text-[#E5EEFF]">{item.headline}</p>
                       <p className="mt-2 text-xs text-[#94A4BE]">{item.summary}</p>
                       <p className="mt-2 text-xs text-[#94A4BE]">{item.source}</p>
@@ -434,10 +436,10 @@ export default function HomepageContent() {
                   className="w-[260px] flex-shrink-0 rounded-xl border border-white/[0.08] bg-[#101725] p-4"
                 >
                   <a href={item.articleUrl} target="_blank" rel="noreferrer" className="block">
-                    <div className="mb-3 h-16 rounded-lg bg-[radial-gradient(circle_at_20%_20%,rgba(79,140,255,0.25),transparent_50%),radial-gradient(circle_at_80%_70%,rgba(0,200,150,0.18),transparent_55%),#0B1120]" />
+                    <div className="mb-3 h-16 rounded-lg border border-white/[0.08] bg-cover bg-center" style={{ backgroundImage: getNewsVisualStyle(item) }} />
                     <p className="text-[10px] uppercase tracking-[0.2em] text-[#8EA0BA]">{item.category}</p>
                     <p className="mt-2 text-sm font-semibold leading-6 text-[#DDE8FF]">{item.headline}</p>
-                    <p className="mt-2 text-xs text-[#8EA0BA]">{formatRelativeTime(item.timestamp)}</p>
+                    <p className="mt-2 text-xs text-[#8EA0BA]">{item.source}</p>
                   </a>
                 </motion.div>
               ))}
