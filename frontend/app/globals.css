@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  font-family: 'Inter', 'Geist', 'Satoshi', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --background: #050816;
+  --surface: #101725;
+  --surface-secondary: #070B14;
+  --border: rgba(255, 255, 255, 0.08);
+  --primary: #4F8CFF;
+  --emerald: #00C896;
+  --gold: #F5B942;
+  --critical: #FF5D5D;
+  --text: #F8FAFC;
+  --muted: #A1AAB8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(79, 140, 255, 0.08) 0%, rgba(5, 8, 22, 0) 34rem),
+    linear-gradient(180deg, #050816 0%, #050816 100%);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 68%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+::selection {
+  background: rgba(79, 140, 255, 0.24);
+  color: #fff;
+}
+
+section {
+  position: relative;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.card-glass {
+  @apply rounded-[32px] border border-[rgba(255,255,255,0.08)] bg-[#101725]/95 shadow-[0_40px_120px_rgba(0,0,0,0.18)] backdrop-blur-xl;
+}
+
+.glow-border {
+  box-shadow: 0 0 42px rgba(79, 140, 255, 0.12);
+}
+
+.glow-gradient {
+  background: linear-gradient(180deg, rgba(79, 140, 255, 0.18), transparent 65%);
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-track {
+  animation: ticker-scroll 28s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 999px;
+  background: #4F8CFF;
+  border: 2px solid #DDE8FF;
+  box-shadow: 0 0 20px rgba(79, 140, 255, 0.48);
+}
+
+input[type='range']::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  border-radius: 999px;
+  background: #4F8CFF;
+  border: 2px solid #DDE8FF;
+  box-shadow: 0 0 20px rgba(79, 140, 255, 0.48);
+}

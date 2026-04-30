@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "@chakra-ui/react": "^3.35.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "autoprefixer": "^10.5.0",
+    "axios": "^1.15.2",
+    "framer-motion": "^12.38.0",
+    "postcss": "^8.5.12",
+    "react-router-dom": "^7.14.2",
+    "recharts": "^3.8.1",
+    "tailwindcss": "^4.2.4"
+  }
+}

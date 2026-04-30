@@ -1,0 +1,78 @@
+<svg width="1200" height="820" viewBox="0 0 1200 820" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgCard" x1="120" y1="80" x2="1080" y2="740" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A1020"/>
+      <stop offset="1" stop-color="#070B14"/>
+    </linearGradient>
+    <linearGradient id="accentBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#6EA2FF"/>
+      <stop offset="1" stop-color="#4F8CFF"/>
+    </linearGradient>
+    <linearGradient id="accentMint" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#39E4BD"/>
+      <stop offset="1" stop-color="#00C896"/>
+    </linearGradient>
+    <filter id="glowBlue" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="820" rx="28" fill="url(#bgCard)"/>
+  <rect x="36" y="32" width="1128" height="756" rx="24" stroke="rgba(255,255,255,0.10)"/>
+
+  <text x="92" y="118" fill="#8FA9D8" font-family="Inter, Arial, sans-serif" font-size="21" letter-spacing="6">AI VALUATION COCKPIT</text>
+  <text x="92" y="172" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="700">Quantedge Systems</text>
+
+  <rect x="870" y="78" width="130" height="112" rx="18" fill="#050816" stroke="rgba(255,255,255,0.10)"/>
+  <text x="906" y="118" fill="#9FB0C9" font-family="Inter, Arial, sans-serif" font-size="24">Fair</text>
+  <text x="902" y="159" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="700">$94</text>
+
+  <rect x="1020" y="78" width="132" height="112" rx="18" fill="rgba(0,200,150,0.12)" stroke="rgba(0,200,150,0.34)"/>
+  <text x="1051" y="118" fill="#9FB0C9" font-family="Inter, Arial, sans-serif" font-size="24">Upside</text>
+  <text x="1043" y="159" fill="#00C896" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="700">+29%</text>
+
+  <line x1="80" y1="220" x2="1120" y2="220" stroke="rgba(255,255,255,0.08)"/>
+
+  <rect x="82" y="252" width="650" height="500" rx="18" fill="#050816" stroke="rgba(255,255,255,0.08)"/>
+  <text x="110" y="304" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="600">Intrinsic value trajectory</text>
+  <rect x="592" y="270" width="116" height="46" rx="23" fill="rgba(79,140,255,0.16)"/>
+  <text x="624" y="301" fill="#4F8CFF" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="700">DCF + AI</text>
+
+  <g opacity="0.42">
+    <line x1="126" y1="690" x2="690" y2="690" stroke="#1A2438"/>
+    <line x1="126" y1="630" x2="690" y2="630" stroke="#1A2438"/>
+    <line x1="126" y1="570" x2="690" y2="570" stroke="#1A2438"/>
+    <line x1="126" y1="510" x2="690" y2="510" stroke="#1A2438"/>
+    <line x1="126" y1="450" x2="690" y2="450" stroke="#1A2438"/>
+  </g>
+
+  <path d="M126 642C183 624 237 596 296 566C356 535 409 514 470 478C532 442 588 402 690 336"
+        stroke="url(#accentBlue)" stroke-width="8" stroke-linecap="round" filter="url(#glowBlue)"/>
+  <path d="M126 670C184 662 240 646 298 624C357 602 412 578 468 548C526 517 588 486 690 448"
+        stroke="url(#accentMint)" stroke-width="6" stroke-linecap="round"/>
+
+  <text x="214" y="726" fill="#8A99B2" font-family="Inter, Arial, sans-serif" font-size="28">Y2</text>
+  <text x="324" y="726" fill="#8A99B2" font-family="Inter, Arial, sans-serif" font-size="28">Y3</text>
+  <text x="438" y="726" fill="#8A99B2" font-family="Inter, Arial, sans-serif" font-size="28">Y4</text>
+  <text x="552" y="726" fill="#8A99B2" font-family="Inter, Arial, sans-serif" font-size="28">Y5</text>
+  <text x="660" y="726" fill="#8A99B2" font-family="Inter, Arial, sans-serif" font-size="28">Y6</text>
+
+  <rect x="758" y="252" width="360" height="230" rx="18" fill="#050816" stroke="rgba(255,255,255,0.08)"/>
+  <text x="804" y="304" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="700">AI insight</text>
+  <text x="804" y="360" fill="#A1AAB8" font-family="Inter, Arial, sans-serif" font-size="31">Terminal value remains</text>
+  <text x="804" y="404" fill="#A1AAB8" font-family="Inter, Arial, sans-serif" font-size="31">the dominant driver.</text>
+  <text x="804" y="448" fill="#A1AAB8" font-family="Inter, Arial, sans-serif" font-size="31">Focus on WACC and growth.</text>
+
+  <rect x="758" y="502" width="360" height="250" rx="18" fill="#050816" stroke="rgba(255,255,255,0.08)"/>
+  <text x="804" y="554" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="700">Valuation bridge</text>
+  <rect x="816" y="640" width="70" height="62" rx="8" fill="#4F8CFF"/>
+  <rect x="908" y="584" width="70" height="118" rx="8" fill="#5D8FE6"/>
+  <rect x="1000" y="664" width="70" height="38" rx="8" fill="#3F7FDB"/>
+  <text x="820" y="734" fill="#8A99B2" font-family="Inter, Arial, sans-serif" font-size="25">FCF</text>
+  <text x="919" y="734" fill="#8A99B2" font-family="Inter, Arial, sans-serif" font-size="25">TV</text>
+  <text x="997" y="734" fill="#8A99B2" font-family="Inter, Arial, sans-serif" font-size="25">Cash</text>
+</svg>
