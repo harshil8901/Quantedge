@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, ChevronRight, Flame, Newspaper, Search } from 'lucide-react';
@@ -29,6 +30,18 @@ type MarketMover = { symbol: string; name: string; change: number; price: number
 type MarketMoversResponse = { gainers: MarketMover[]; losers: MarketMover[]; source: string };
 type MarketIndex = { symbol: string; price: number; change: number };
 type MarketIndicesResponse = { indices: MarketIndex[]; source: string };
+type NewsCategory = 'All' | 'Markets' | 'Macro' | 'Tech' | 'Earnings' | 'AI' | 'Energy';
+type NewsItem = {
+  headline: string;
+  source: string;
+  timestamp: string;
+  summary: string;
+  image?: string;
+  relatedTickers: string[];
+  articleUrl: string;
+  category: NewsCategory;
+};
+type NewsResponse = { items: NewsItem[]; provider: string; queryUsed: string };
 
 async function fetchMarketMovers(): Promise<MarketMoversResponse> {
   const response = await fetch(`${API_URL}/api/valuation/market/movers`);
@@ -42,23 +55,34 @@ async function fetchMarketIndices(): Promise<MarketIndicesResponse> {
   return response.json();
 }
 
-const newsroomFeed = [
-  { category: 'TECH', headline: 'Semiconductor capex cycle accelerates amid sustained AI server demand', source: 'Street Consensus', timestamp: '12 min ago', tickers: ['AMD', 'ASML'] },
-  { category: 'MACRO', headline: 'Treasury curve steepens as rate-cut expectations regain traction', source: 'Policy Watch', timestamp: '28 min ago', tickers: ['TLT', 'IEF'] },
-  { category: 'ENERGY', headline: 'Refining margins improve as crude differentials remain favorable', source: 'Commodities Note', timestamp: '43 min ago', tickers: ['XOM', 'CVX'] },
-  { category: 'EARNINGS', headline: 'Large-cap software margins surprise despite moderate topline growth', source: 'Earnings Desk', timestamp: '1h ago', tickers: ['CRM', 'ADBE'] },
-  { category: 'BANKS', headline: 'Large-cap banks outperform as net interest margin pressure stabilizes', source: 'Macro Lens', timestamp: '1h ago', tickers: ['JPM', 'HDFCBANK'] },
-  { category: 'AI', headline: 'Hyperscaler AI spend remains elevated through current budgeting cycle', source: 'QuantEdge Markets', timestamp: '1h ago', tickers: ['MSFT', 'GOOGL'] },
-  { category: 'MARKETS', headline: 'Quality factor leadership persists as cyclicals lag broad index rebound', source: 'Cross Asset Daily', timestamp: '2h ago', tickers: ['SPY', 'QQQ'] },
-  { category: 'CREDIT', headline: 'Private credit spreads tighten as institutional demand absorbs supply', source: 'Capital Desk', timestamp: '2h ago', tickers: ['BX', 'KKR'] },
-  { category: 'FX', headline: 'Dollar softness continues as carry positioning unwinds across majors', source: 'FX Focus', timestamp: '3h ago', tickers: ['DXY', 'EURUSD'] },
-  { category: 'INDIA', headline: 'India IT services trade at a discount despite margin resilience', source: 'Asia Equity Brief', timestamp: '3h ago', tickers: ['TCS', 'INFY'] },
-  { category: 'AUTOS', headline: 'EV pricing competition intensifies as inventory days stay elevated', source: 'Mobility Intel', timestamp: '4h ago', tickers: ['TSLA', 'BYDDF'] },
-  { category: 'HEALTH', headline: 'Managed care names rebound as utilization trends normalize sequentially', source: 'Healthcare Radar', timestamp: '4h ago', tickers: ['UNH', 'ELV'] },
-  { category: 'INDUSTRIALS', headline: 'Aerospace suppliers lift guidance on persistent order backlogs', source: 'Industry Pulse', timestamp: '5h ago', tickers: ['BA', 'GE'] },
-  { category: 'RETAIL', headline: 'Discretionary basket firms on stronger traffic and conversion trends', source: 'Consumer Track', timestamp: '5h ago', tickers: ['AMZN', 'WMT'] },
-  { category: 'MATERIALS', headline: 'Copper-sensitive equities advance as China demand indicators improve', source: 'Global Metals', timestamp: '6h ago', tickers: ['FCX', 'RIO'] },
-];
+const newsroomFilters: NewsCategory[] = ['All', 'Markets', 'Macro', 'Tech', 'Earnings', 'AI', 'Energy'];
+
+const formatRelativeTime = (timestamp: string): string => {
+  const target = new Date(timestamp).getTime();
+  if (!Number.isFinite(target)) return 'Just now';
+  const diffMs = Date.now() - target;
+  const diffMinutes = Math.floor(diffMs / 60000);
+  if (diffMinutes < 1) return 'Just now';
+  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+};
+
+async function fetchMarketNews(params: { category: NewsCategory; search: string }): Promise<NewsResponse> {
+  const query = new URLSearchParams({
+    category: params.category,
+    search: params.search,
+    language: 'en',
+    pageSize: '18',
+  });
+  const response = await fetch(`${API_URL}/api/valuation/market/news?${query.toString()}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch market news.');
+  }
+  return response.json();
+}
 
 function MarketStrip({ indices }: { indices?: MarketIndex[] }) {
   const fallbackIndices = marketTicker.map((item) => ({
@@ -94,6 +118,15 @@ function MarketStrip({ indices }: { indices?: MarketIndex[] }) {
 }
 
 export default function HomepageContent() {
+  const [activeNewsFilter, setActiveNewsFilter] = useState<NewsCategory>('All');
+  const [newsSearchInput, setNewsSearchInput] = useState('');
+  const [debouncedNewsSearch, setDebouncedNewsSearch] = useState('');
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedNewsSearch(newsSearchInput.trim()), 350);
+    return () => window.clearTimeout(timeout);
+  }, [newsSearchInput]);
+
   const moversQuery = useQuery({
     queryKey: ['market-movers'],
     queryFn: fetchMarketMovers,
@@ -108,6 +141,15 @@ export default function HomepageContent() {
   });
   const gainers = moversQuery.data?.gainers?.length ? moversQuery.data.gainers.slice(0, 4) : topGainers;
   const losers = moversQuery.data?.losers?.length ? moversQuery.data.losers.slice(0, 4) : topLosers;
+  const newsQuery = useQuery({
+    queryKey: ['market-news', activeNewsFilter, debouncedNewsSearch],
+    queryFn: () => fetchMarketNews({ category: activeNewsFilter, search: debouncedNewsSearch }),
+    staleTime: 120_000,
+    refetchOnWindowFocus: false,
+  });
+  const newsroomFeed = useMemo(() => newsQuery.data?.items || [], [newsQuery.data?.items]);
+  const featuredNews = newsroomFeed.slice(0, 15);
+  const carouselNews = newsroomFeed.slice(3, 15);
 
   return (
     <div className="relative overflow-hidden">
@@ -271,18 +313,38 @@ export default function HomepageContent() {
             <SectionHeader
               eyebrow="NEWSROOM"
               title="Market News & Insights"
-              description="Latest developments across markets and institutional research."
+              description="Latest developments across markets, macro trends, and institutional research."
             />
             <div className="flex flex-wrap gap-2">
-              {['All', 'Markets', 'Macro', 'Tech', 'Earnings', 'AI', 'Energy'].map((tag) => (
+              {newsroomFilters.map((tag) => (
                 <button
                   key={tag}
                   type="button"
-                  className="rounded-full border border-white/[0.08] bg-[#101725] px-3 py-1.5 text-xs font-semibold text-[#C9D3E6] transition duration-300 hover:border-[#4F8CFF]/45 hover:text-white hover:shadow-[0_0_16px_rgba(79,140,255,0.25)]"
+                  onClick={() => setActiveNewsFilter(tag)}
+                  className={cn(
+                    'rounded-full border px-3 py-1.5 text-xs font-semibold transition duration-300',
+                    activeNewsFilter === tag
+                      ? 'border-[#4F8CFF]/55 bg-[#4F8CFF]/18 text-white shadow-[0_0_16px_rgba(79,140,255,0.25)]'
+                      : 'border-white/[0.08] bg-[#101725] text-[#C9D3E6] hover:border-[#4F8CFF]/45 hover:text-white hover:shadow-[0_0_16px_rgba(79,140,255,0.25)]'
+                  )}
                 >
                   {tag}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/[0.08] bg-[#0D1424]/85 p-3 shadow-[0_14px_40px_rgba(0,0,0,0.25)]">
+            <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-[#070D19] px-4 py-3 focus-within:border-[#4F8CFF]/50 focus-within:shadow-[0_0_20px_rgba(79,140,255,0.18)]">
+              <Search size={16} className="text-[#8EA0BA]" />
+              <input
+                type="text"
+                value={newsSearchInput}
+                onChange={(event) => setNewsSearchInput(event.target.value)}
+                placeholder="Search newsroom (e.g. Nvidia earnings, India inflation, AI infrastructure, oil prices)"
+                className="w-full bg-transparent text-sm text-white placeholder:text-[#7F8EA5] outline-none"
+              />
+              {newsQuery.isFetching ? <span className="text-xs font-semibold text-[#8EA0BA]">Searching...</span> : null}
             </div>
           </div>
 
@@ -293,46 +355,90 @@ export default function HomepageContent() {
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
           >
-            {newsroomFeed.slice(0, 15).map((item, index) => (
-              <motion.article
-                key={item.headline}
-                initial={{ opacity: 0, y: 6 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.24, delay: index * 0.02 }}
-                whileHover={{ y: -3 }}
-                className="rounded-2xl border border-white/[0.08] bg-[#101725] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.24)] transition-colors hover:border-[#4F8CFF]/30"
-              >
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8EA0BA]">{item.category}</p>
-                  <p className="text-xs text-[#8EA0BA]">{item.timestamp}</p>
-                </div>
-                <p className="text-[15px] font-semibold leading-6 text-[#E5EEFF]">{item.headline}</p>
-                <p className="mt-2 text-xs text-[#94A4BE]">{item.source}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {item.tickers.map((ticker) => (
-                    <span key={ticker} className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[10px] font-semibold text-[#DDE8FF]">
-                      {ticker}
-                    </span>
-                  ))}
-                </div>
-              </motion.article>
-            ))}
+            {newsQuery.isLoading
+              ? Array.from({ length: 9 }).map((_, index) => (
+                  <div
+                    key={`news-skeleton-${index}`}
+                    className="animate-pulse rounded-2xl border border-white/[0.08] bg-[#101725] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.24)]"
+                  >
+                    <div className="h-3 w-24 rounded bg-white/[0.08]" />
+                    <div className="mt-4 h-5 w-full rounded bg-white/[0.08]" />
+                    <div className="mt-2 h-5 w-4/5 rounded bg-white/[0.08]" />
+                    <div className="mt-4 h-3 w-36 rounded bg-white/[0.08]" />
+                    <div className="mt-4 flex gap-2">
+                      <div className="h-5 w-14 rounded-full bg-white/[0.08]" />
+                      <div className="h-5 w-14 rounded-full bg-white/[0.08]" />
+                    </div>
+                  </div>
+                ))
+              : null}
+
+            {newsQuery.isError ? (
+              <div className="col-span-full rounded-2xl border border-[#FF5D5D]/35 bg-[#1A1014] p-5 text-[#FFC9D0]">
+                News feed is temporarily unavailable. Please retry in a moment.
+              </div>
+            ) : null}
+
+            {!newsQuery.isLoading && !newsQuery.isError && featuredNews.length === 0 ? (
+              <div className="col-span-full rounded-2xl border border-white/[0.08] bg-[#101725] p-8 text-center">
+                <Newspaper size={20} className="mx-auto text-[#8EA0BA]" />
+                <p className="mt-3 text-sm font-semibold text-[#DDE8FF]">No market stories found for this query.</p>
+              </div>
+            ) : null}
+
+            {!newsQuery.isLoading && !newsQuery.isError
+              ? featuredNews.map((item, index) => (
+                  <motion.article
+                    key={`${item.articleUrl}-${index}`}
+                    initial={{ opacity: 0, y: 6 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.2 }}
+                    transition={{ duration: 0.24, delay: index * 0.02 }}
+                    whileHover={{ y: -3 }}
+                    className="rounded-2xl border border-white/[0.08] bg-[#101725] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.24)] transition-colors hover:border-[#4F8CFF]/30"
+                  >
+                    <a href={item.articleUrl} target="_blank" rel="noreferrer" className="block">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8EA0BA]">{item.category}</p>
+                        <p className="text-xs text-[#8EA0BA]">{formatRelativeTime(item.timestamp)}</p>
+                      </div>
+                      {item.image ? (
+                        <div
+                          className="mb-3 h-24 w-full rounded-lg border border-white/[0.08] bg-cover bg-center"
+                          style={{ backgroundImage: `linear-gradient(to bottom, rgba(5,8,22,0.2), rgba(5,8,22,0.65)), url(${item.image})` }}
+                        />
+                      ) : null}
+                      <p className="text-[15px] font-semibold leading-6 text-[#E5EEFF]">{item.headline}</p>
+                      <p className="mt-2 text-xs text-[#94A4BE]">{item.summary}</p>
+                      <p className="mt-2 text-xs text-[#94A4BE]">{item.source}</p>
+                    </a>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {(item.relatedTickers || []).slice(0, 3).map((ticker) => (
+                        <span key={ticker} className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[10px] font-semibold text-[#DDE8FF]">
+                          {ticker}
+                        </span>
+                      ))}
+                    </div>
+                  </motion.article>
+                ))
+              : null}
           </motion.div>
 
           <div className="overflow-x-auto">
             <div className="flex min-w-max gap-3 pb-2">
-              {newsroomFeed.slice(3, 15).map((item) => (
+              {carouselNews.map((item, index) => (
                 <motion.div
-                  key={`${item.headline}-carousel`}
+                  key={`${item.articleUrl}-carousel-${index}`}
                   whileHover={{ y: -3 }}
                   transition={{ duration: 0.2 }}
                   className="w-[260px] flex-shrink-0 rounded-xl border border-white/[0.08] bg-[#101725] p-4"
                 >
-                  <div className="mb-3 h-16 rounded-lg bg-[radial-gradient(circle_at_20%_20%,rgba(79,140,255,0.25),transparent_50%),radial-gradient(circle_at_80%_70%,rgba(0,200,150,0.18),transparent_55%),#0B1120]" />
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-[#8EA0BA]">{item.category}</p>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-[#DDE8FF]">{item.headline}</p>
-                  <p className="mt-2 text-xs text-[#8EA0BA]">{item.timestamp}</p>
+                  <a href={item.articleUrl} target="_blank" rel="noreferrer" className="block">
+                    <div className="mb-3 h-16 rounded-lg bg-[radial-gradient(circle_at_20%_20%,rgba(79,140,255,0.25),transparent_50%),radial-gradient(circle_at_80%_70%,rgba(0,200,150,0.18),transparent_55%),#0B1120]" />
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-[#8EA0BA]">{item.category}</p>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-[#DDE8FF]">{item.headline}</p>
+                    <p className="mt-2 text-xs text-[#8EA0BA]">{formatRelativeTime(item.timestamp)}</p>
+                  </a>
                 </motion.div>
               ))}
             </div>

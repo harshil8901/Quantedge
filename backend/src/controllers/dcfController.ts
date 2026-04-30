@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { calculateDCFWorkflow, DCFCompanyInputs, DCFScenarioAssumptions, ScenarioKey } from '../calculations/dcfCalculation';
 import { fetchFmpCompanySnapshot, fetchFmpMarketIndices, fetchFmpMarketMovers } from '../services/fmpService';
 import { fetchAlphaVantageSnapshot } from '../services/alphaVantageService';
+import { fetchMarketNews } from '../services/newsService';
 import { fetchYahooIndicesSnapshot, fetchYahooSnapshot } from '../services/yahooFinanceService';
 
 type DCFWorkflowPayload = {
@@ -71,5 +72,19 @@ export const handleMarketIndices = async (_req: Request, res: Response) => {
       const yahooMessage = yahooError instanceof Error ? yahooError.message : 'Yahoo indices fetch failed.';
       return res.status(500).json({ error: `Failed to fetch market indices. ${fmpMessage} ${yahooMessage}` });
     }
+  }
+};
+
+export const handleMarketNews = async (req: Request, res: Response) => {
+  const category = String(req.query.category || 'All');
+  const search = String(req.query.search || '');
+  const pageSize = Number(req.query.pageSize || 18);
+  const language = String(req.query.language || 'en');
+
+  try {
+    const news = await fetchMarketNews({ category, search, pageSize, language });
+    return res.json(news);
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to fetch market news.' });
   }
 };

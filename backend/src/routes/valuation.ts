@@ -1,5 +1,5 @@
 import express from 'express';
-import { handleCompanyLookup, handleDCF, handleMarketIndices, handleMarketMovers } from '../controllers/dcfController';
+import { handleCompanyLookup, handleDCF, handleMarketIndices, handleMarketMovers, handleMarketNews } from '../controllers/dcfController';
 import { handleComps } from '../controllers/compsController';
 import { handleDDM } from '../controllers/ddmController';
 
@@ -11,5 +11,6 @@ router.post('/ddm', handleDDM);
 router.get('/company/:ticker', handleCompanyLookup);
 router.get('/market/movers', handleMarketMovers);
 router.get('/market/indices', handleMarketIndices);
+router.get('/market/news', handleMarketNews);
 
 export default router;
