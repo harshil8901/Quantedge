@@ -1,4 +1,4 @@
-import DDMCalculator from '@/components/DDMCalculator';
+import DDMValuation from '@/components/DDMValuation';
 import Panel from '@/components/ui/Panel';
 import SectionHeader from '@/components/ui/SectionHeader';
 
@@ -18,7 +18,7 @@ export default function DDMModelPage() {
             description="Price durable payout streams with growth scenarios, dividend forecasts, cost of equity sensitivity, and institutional AI commentary."
           />
           <div className="grid gap-3 sm:grid-cols-3">
-            {['Low Growth', 'Stable Growth', 'High Growth'].map((item) => (
+            {['Bear', 'Base', 'Bull'].map((item) => (
               <div key={item} className="rounded-lg border border-white/[0.08] bg-[#070B14] p-4">
                 <p className="text-xs uppercase tracking-[0.24em] text-[#A1AAB8]">Scenario</p>
                 <p className="mt-3 text-2xl font-semibold text-white">{item}</p>
@@ -28,7 +28,7 @@ export default function DDMModelPage() {
         </div>
       </Panel>
 
-      <DDMCalculator />
+      <DDMValuation />
     </main>
   );
 }

@@ -10,7 +10,7 @@ import NumberField from '@/components/forms/NumberField';
 import RangeField from '@/components/forms/RangeField';
 import Button from '@/components/ui/Button';
 import Panel from '@/components/ui/Panel';
-import { formatCurrency, formatPercent } from '@/lib/format';
+import { formatCurrency, formatDecimal, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -233,7 +233,7 @@ export default function DCFCalculator() {
                 ['EBIT', formatCurrency(companyData.ebit)],
                 ['Cash', formatCurrency(companyData.cash)],
                 ['Debt', formatCurrency(companyData.debt)],
-                ['Shares Outstanding', companyData.sharesOutstanding.toLocaleString()],
+                ['Shares Outstanding', formatDecimal(companyData.sharesOutstanding, 0)],
                 ['Historical Growth', formatPercent(companyData.historicalRevenueGrowth)],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg border border-white/[0.08] bg-[#070D19] px-3 py-3">

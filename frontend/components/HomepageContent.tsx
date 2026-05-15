@@ -9,6 +9,7 @@ import Panel from '@/components/ui/Panel';
 import SectionHeader from '@/components/ui/SectionHeader';
 import MiniAreaChart from '@/components/charts/MiniAreaChart';
 import { intelligenceCards, marketTicker, trendingStocks } from '@/lib/market-data';
+import { formatDecimal } from '@/lib/format';
 import { cn } from '@/lib/utils';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -107,7 +108,7 @@ function MarketStrip({ indices }: { indices?: MarketIndex[] }) {
             <div key={`${item.symbol}-${index}`} className="flex min-w-[220px] items-center justify-between gap-5 rounded-lg border border-white/[0.08] bg-[#101725]/70 px-4 py-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white">{item.symbol}</p>
-                <p className="mt-1 text-sm text-[#A1AAB8]">{item.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+                <p className="mt-1 text-sm text-[#A1AAB8]">{formatDecimal(item.price, 2)}</p>
               </div>
               <span className={cn('rounded-full px-3 py-1 text-xs font-semibold', positive ? 'bg-[#00C896]/10 text-[#00C896]' : 'bg-[#FF5D5D]/10 text-[#FF5D5D]')}>
                 {positive ? '+' : ''}

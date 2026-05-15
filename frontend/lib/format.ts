@@ -12,6 +12,12 @@ export const formatNumber = (value: number, fractionDigits = 1) =>
     minimumFractionDigits: fractionDigits,
   }).format(value);
 
+export const formatDecimal = (value: number, fractionDigits = 2) =>
+  new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: fractionDigits,
+    minimumFractionDigits: 0,
+  }).format(value);
+
 export const formatPercent = (value: number, fractionDigits = 1) =>
   `${formatNumber(value, fractionDigits)}%`;
 
