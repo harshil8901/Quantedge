@@ -14,3 +14,8 @@ export const formatNumber = (value: number, fractionDigits = 1) =>
 
 export const formatPercent = (value: number, fractionDigits = 1) =>
   `${formatNumber(value, fractionDigits)}%`;
+
+export const formatMultiple = (value: number | null | undefined, fractionDigits = 1) => {
+  if (value == null || !Number.isFinite(value)) return '—';
+  return `${formatNumber(value, fractionDigits)}x`;
+};

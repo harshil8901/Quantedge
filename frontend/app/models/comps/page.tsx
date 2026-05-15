@@ -1,4 +1,4 @@
-import CompsCalculator from '@/components/CompsCalculator';
+import ComparableAnalysis from '@/components/ComparableAnalysis';
 import Panel from '@/components/ui/Panel';
 import SectionHeader from '@/components/ui/SectionHeader';
 
@@ -28,7 +28,7 @@ export default function CompsModelPage() {
         </div>
       </Panel>
 
-      <CompsCalculator />
+      <ComparableAnalysis />
     </main>
   );
 }

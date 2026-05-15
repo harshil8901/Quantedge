@@ -10,6 +10,37 @@ const getApiKey = () => {
   return apiKey;
 };
 
+export const isRapidApiKey = (apiKey: string) => apiKey.includes('msh') || apiKey.length > 40;
+
+const rapidHeaders = (apiKey: string) => ({
+  'x-rapidapi-key': apiKey,
+  'x-rapidapi-host': 'financial-modeling-prep.p.rapidapi.com',
+});
+
+const formatFmpError = (error: unknown, usingRapid: boolean): Error => {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    if (status === 401) {
+      return new Error(
+        usingRapid
+          ? 'RapidAPI authentication failed. Check FMP_API_KEY in backend/.env matches your RapidAPI Financial Modeling Prep subscription.'
+          : 'Invalid FMP API key. Use a key from financialmodelingprep.com or a valid RapidAPI FMP key in FMP_API_KEY.',
+      );
+    }
+    if (status === 403) {
+      return new Error('FMP access forbidden for this endpoint. Your API plan may not include this data.');
+    }
+    if (status === 429) {
+      return new Error(
+        'FMP data quota exceeded (rate limit). Wait for your RapidAPI daily limit to reset or upgrade your plan.',
+      );
+    }
+    const message = (error.response?.data as { message?: string })?.message;
+    if (message) return new Error(message);
+  }
+  return error instanceof Error ? error : new Error('Failed to fetch FMP market data.');
+};
+
 const toNumber = (value: unknown): number => (typeof value === 'number' ? value : Number(value ?? 0)) || 0;
 
 export interface CompanyDataSnapshot {
@@ -82,20 +113,29 @@ export const fetchFmpCompanySnapshot = async (ticker: string): Promise<CompanyDa
 
   const fetchRapid = async () =>
     Promise.all([
-      axios.get(`${RAPID_BASE_URL}/profile/${symbol}`, { headers: { 'x-rapidapi-key': apiKey, 'x-rapidapi-host': 'financial-modeling-prep.p.rapidapi.com' } }),
-      axios.get(`${RAPID_BASE_URL}/income-statement/${symbol}?limit=2`, { headers: { 'x-rapidapi-key': apiKey, 'x-rapidapi-host': 'financial-modeling-prep.p.rapidapi.com' } }),
-      axios.get(`${RAPID_BASE_URL}/balance-sheet-statement/${symbol}?limit=2`, { headers: { 'x-rapidapi-key': apiKey, 'x-rapidapi-host': 'financial-modeling-prep.p.rapidapi.com' } }),
-      axios.get(`${RAPID_BASE_URL}/cash-flow-statement/${symbol}?limit=2`, { headers: { 'x-rapidapi-key': apiKey, 'x-rapidapi-host': 'financial-modeling-prep.p.rapidapi.com' } }),
+      axios.get(`${RAPID_BASE_URL}/profile/${symbol}`, { headers: rapidHeaders(apiKey) }),
+      axios.get(`${RAPID_BASE_URL}/income-statement/${symbol}?limit=2`, { headers: rapidHeaders(apiKey) }),
+      axios.get(`${RAPID_BASE_URL}/balance-sheet-statement/${symbol}?limit=2`, { headers: rapidHeaders(apiKey) }),
+      axios.get(`${RAPID_BASE_URL}/cash-flow-statement/${symbol}?limit=2`, { headers: rapidHeaders(apiKey) }),
     ]);
 
   let profileRes;
   let incomeRes;
   let balanceRes;
   let cashFlowRes;
+  const useRapid = isRapidApiKey(apiKey);
+
   try {
-    [profileRes, incomeRes, balanceRes, cashFlowRes] = await fetchDirect();
-  } catch (directError) {
-    [profileRes, incomeRes, balanceRes, cashFlowRes] = await fetchRapid();
+    [profileRes, incomeRes, balanceRes, cashFlowRes] = useRapid ? await fetchRapid() : await fetchDirect();
+  } catch (primaryError) {
+    if (useRapid) {
+      throw formatFmpError(primaryError, true);
+    }
+    try {
+      [profileRes, incomeRes, balanceRes, cashFlowRes] = await fetchRapid();
+    } catch (fallbackError) {
+      throw formatFmpError(fallbackError, true);
+    }
   }
 
   const profile = profileRes.data?.[0] ?? {};

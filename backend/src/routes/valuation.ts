@@ -1,12 +1,14 @@
 import express from 'express';
 import { handleCompanyLookup, handleDCF, handleMarketIndices, handleMarketMovers, handleMarketNews } from '../controllers/dcfController';
-import { handleComps } from '../controllers/compsController';
+import { handleComps, handleCompsPeerLookup, handleCompsWorkspace } from '../controllers/compsController';
 import { handleDDM } from '../controllers/ddmController';
 
 const router = express.Router();
 
 router.post('/dcf', handleDCF);
 router.post('/comps', handleComps);
+router.get('/comps/peer/:ticker', handleCompsPeerLookup);
+router.get('/comps/:ticker', handleCompsWorkspace);
 router.post('/ddm', handleDDM);
 router.get('/company/:ticker', handleCompanyLookup);
 router.get('/market/movers', handleMarketMovers);

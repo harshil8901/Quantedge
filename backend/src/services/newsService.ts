@@ -70,12 +70,18 @@ const extractTickers = (text: string): string[] => {
 const normalizeArticle = (article: Record<string, unknown>): NewsItem | null => {
   const sourceObject = article.source as Record<string, unknown> | undefined;
   const headline = String(article.title || article.headline || '').trim();
-  const summary = String(article.description || article.summary || article.snippet || '').trim();
+  const summary = String(
+    article.description || article.summary || article.snippet || article.excerpt || article.content || '',
+  ).trim();
   const articleUrl = String(article.url || article.link || article.article_url || '').trim();
   if (!headline || !articleUrl) return null;
 
+  const rawSource = article.source;
   const source =
-    String(sourceObject?.name || article.source_name || article.source || 'Market Wire').trim() || 'Market Wire';
+    (typeof rawSource === 'string'
+      ? rawSource
+      : String(sourceObject?.name || article.source_name || '')
+    ).trim();
   const timestamp = String(article.publishedAt || article.pubDate || article.published_at || new Date().toISOString());
   const image = String(
     article.logo ||
@@ -96,7 +102,7 @@ const normalizeArticle = (article: Record<string, unknown>): NewsItem | null => 
     headline,
     source,
     timestamp,
-    summary: summary || 'Market desk update available in full article.',
+    summary,
     image,
     relatedTickers,
     articleUrl,

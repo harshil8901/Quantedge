@@ -411,8 +411,8 @@ export default function HomepageContent() {
                         style={{ backgroundImage: getNewsVisualStyle(item) }}
                       />
                       <p className="text-[15px] font-semibold leading-6 text-[#E5EEFF]">{item.headline}</p>
-                      <p className="mt-2 text-xs text-[#94A4BE]">{item.summary}</p>
-                      <p className="mt-2 text-xs text-[#94A4BE]">{item.source}</p>
+                      {item.summary ? <p className="mt-2 text-xs text-[#94A4BE]">{item.summary}</p> : null}
+                      {item.source ? <p className="mt-2 text-xs text-[#94A4BE]">{item.source}</p> : null}
                     </a>
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {(item.relatedTickers || []).slice(0, 3).map((ticker) => (
@@ -439,7 +439,7 @@ export default function HomepageContent() {
                     <div className="mb-3 h-16 rounded-lg border border-white/[0.08] bg-cover bg-center" style={{ backgroundImage: getNewsVisualStyle(item) }} />
                     <p className="text-[10px] uppercase tracking-[0.2em] text-[#8EA0BA]">{item.category}</p>
                     <p className="mt-2 text-sm font-semibold leading-6 text-[#DDE8FF]">{item.headline}</p>
-                    <p className="mt-2 text-xs text-[#8EA0BA]">{item.source}</p>
+                    {item.source ? <p className="mt-2 text-xs text-[#8EA0BA]">{item.source}</p> : null}
                   </a>
                 </motion.div>
               ))}
