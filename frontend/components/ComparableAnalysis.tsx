@@ -27,9 +27,7 @@ import {
   XAxis,
   YAxis,
   ZAxis,
-  type TooltipProps,
 } from 'recharts';
-import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import ChartFrame from '@/components/charts/ChartFrame';
 import ClientChart from '@/components/charts/ClientChart';
 import Button from '@/components/ui/Button';
@@ -117,12 +115,20 @@ const MULTIPLE_OPTIONS: Array<{ key: CompsMultipleKey; label: string }> = [
   { key: 'pe', label: 'P / E' },
 ];
 
-function CompsChartTooltip({
-  active,
-  payload,
-  label,
-  valueFormatter,
-}: TooltipProps<ValueType, NameType> & { valueFormatter?: (value: number) => string }) {
+type CompsTooltipPayload = {
+  value?: number | string;
+  name?: string;
+  dataKey?: string | number;
+};
+
+type CompsChartTooltipProps = {
+  active?: boolean;
+  label?: string | number;
+  payload?: CompsTooltipPayload[];
+  valueFormatter?: (value: number) => string;
+};
+
+function CompsChartTooltip({ active, payload, label, valueFormatter }: CompsChartTooltipProps) {
   if (!active || !payload?.length) return null;
 
   return (
@@ -289,13 +295,11 @@ export default function ComparableAnalysis() {
   const activeMultipleLabel = getMultipleLabel(activeMultiple);
   const stats = result?.statistics[activeMultiple];
 
-  const charts = useMemo(() => {
+  const charts = useMemo((): CompsValuationResult['charts'] | null => {
     if (!result) return null;
-    const apiCharts = result.charts as CompsValuationResult['charts'] & {
-      evEbitdaDistribution?: Array<{ ticker: string; value: number }>;
-      peerMultipleComparison?: Array<{ ticker: string; companyName: string; evEbitda?: number; multiple?: number; isTarget?: boolean }>;
-    };
-    if (apiCharts.multipleDistribution?.length) return apiCharts;
+    if (result.charts.multipleDistribution?.length) {
+      return result.charts;
+    }
 
     const rows = [result.target, ...result.peers.filter((peer) => peer.isValid)];
     const readMultiple = (row: CompsPeerRow) => row.multiples[activeMultiple] ?? 0;
@@ -314,7 +318,7 @@ export default function ComparableAnalysis() {
         .filter((peer) => peer.isValid)
         .map((peer) => ({ ticker: peer.ticker, value: readMultiple(peer) }))
         .filter((row) => row.value > 0),
-      valuationRange: apiCharts.valuationRange ?? [],
+      valuationRange: result.charts.valuationRange ?? [],
       premiumDiscountScatter: rows
         .map((row) => ({
           ticker: row.ticker,
