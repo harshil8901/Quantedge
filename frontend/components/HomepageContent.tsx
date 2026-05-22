@@ -9,9 +9,9 @@ import Panel from '@/components/ui/Panel';
 import SectionHeader from '@/components/ui/SectionHeader';
 import MiniAreaChart from '@/components/charts/MiniAreaChart';
 import { intelligenceCards, marketTicker, trendingStocks } from '@/lib/market-data';
+import { apiJson } from '@/lib/api-client';
 import { formatDecimal } from '@/lib/format';
 import { cn } from '@/lib/utils';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const topGainers = [
   { symbol: 'NVDA', name: 'NVIDIA', change: 3.8, price: '$956.12', volume: '49.2M' },
@@ -45,15 +45,11 @@ type NewsItem = {
 type NewsResponse = { items: NewsItem[]; provider: string; queryUsed: string };
 
 async function fetchMarketMovers(): Promise<MarketMoversResponse> {
-  const response = await fetch(`${API_URL}/api/valuation/market/movers`);
-  if (!response.ok) throw new Error('Failed to fetch market movers.');
-  return response.json();
+  return apiJson<MarketMoversResponse>('/api/valuation/market/movers');
 }
 
 async function fetchMarketIndices(): Promise<MarketIndicesResponse> {
-  const response = await fetch(`${API_URL}/api/valuation/market/indices`);
-  if (!response.ok) throw new Error('Failed to fetch market indices.');
-  return response.json();
+  return apiJson<MarketIndicesResponse>('/api/valuation/market/indices');
 }
 
 const newsroomFilters: NewsCategory[] = ['All', 'Markets', 'Macro', 'Tech', 'Earnings', 'AI', 'Energy'];
@@ -82,11 +78,7 @@ async function fetchMarketNews(params: { category: NewsCategory; search: string 
     language: 'en',
     pageSize: '18',
   });
-  const response = await fetch(`${API_URL}/api/valuation/market/news?${query.toString()}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch market news.');
-  }
-  return response.json();
+  return apiJson<NewsResponse>(`/api/valuation/market/news?${query.toString()}`);
 }
 
 function MarketStrip({

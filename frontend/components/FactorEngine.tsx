@@ -24,10 +24,9 @@ import ModelingToolbar from '@/components/modeling/ModelingToolbar';
 import Button from '@/components/ui/Button';
 import Panel from '@/components/ui/Panel';
 import { useModelingWorkspace } from '@/hooks/useModelingWorkspace';
+import { apiJson } from '@/lib/api-client';
 import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const ACCENT = '#7C5CFF';
 
 type FactorTiltKey = 'quality' | 'value' | 'momentum';
@@ -118,9 +117,7 @@ function scoreColor(score: number) {
 }
 
 async function fetchUniverses(): Promise<UniverseOption[]> {
-  const response = await fetch(`${API_URL}/api/factors/universe`);
-  if (!response.ok) throw new Error('Failed to load universes.');
-  const data = await response.json();
+  const data = await apiJson<{ universes: UniverseOption[] }>('/api/factors/universe');
   return data.universes;
 }
 
@@ -128,17 +125,12 @@ async function calculateFactors(payload: {
   universeId: string;
   tilt: FactorTiltKey;
   weights: FactorWeights;
-}) {
-  const response = await fetch(`${API_URL}/api/factors/calculate`, {
+}): Promise<FactorResult> {
+  return apiJson<FactorResult>('/api/factors/calculate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || 'Factor calculation failed.');
-  }
-  return response.json() as Promise<FactorResult>;
 }
 
 export default function FactorEngine() {
@@ -155,13 +147,6 @@ export default function FactorEngine() {
   useEffect(() => {
     if (!customWeights) setWeights(DEFAULT_WEIGHTS[tilt]);
   }, [tilt, customWeights]);
-
-  useEffect(() => {
-    if (universeId) {
-      calcMutation.mutate({ universeId, tilt, weights });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const runScreen = () => {
     if (!universeId) return;

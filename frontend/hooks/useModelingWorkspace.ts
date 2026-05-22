@@ -14,7 +14,7 @@ import {
   type UnitScale,
 } from '@/lib/financial-modeling';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { apiJson } from '@/lib/api-client';
 
 type Draft = {
   company: CompanyProfile;
@@ -52,9 +52,7 @@ export function useModelingWorkspace(modelKey: string, initialCompany?: Partial<
     setFxLoading(true);
     setFxError(null);
     try {
-      const response = await fetch(`${API_URL}/api/fx/rates?base=${baseCurrency}`);
-      if (!response.ok) throw new Error('Failed to load FX rates');
-      const data = await response.json();
+      const data = await apiJson<{ rates?: Record<string, number> }>(`/api/fx/rates?base=${baseCurrency}`);
       setPreferences((prev) => ({
         ...prev,
         baseCurrency,
