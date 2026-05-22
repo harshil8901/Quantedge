@@ -25,3 +25,11 @@ export const formatMultiple = (value: number | null | undefined, fractionDigits 
   if (value == null || !Number.isFinite(value)) return '—';
   return `${formatNumber(value, fractionDigits)}x`;
 };
+
+/** Recharts Tooltip formatter — accepts ValueType | undefined from recharts v3 */
+export const chartTooltipCurrency =
+  (compact = true) =>
+  (value: unknown) =>
+    formatCurrency(Number(value ?? 0), compact);
+
+export const chartTooltipPercent = (value: unknown) => formatPercent(Number(value ?? 0));

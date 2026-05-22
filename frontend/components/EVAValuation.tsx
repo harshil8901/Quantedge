@@ -33,7 +33,7 @@ import NumberField from '@/components/forms/NumberField';
 import RangeField from '@/components/forms/RangeField';
 import Button from '@/components/ui/Button';
 import Panel from '@/components/ui/Panel';
-import { formatCurrency, formatPercent } from '@/lib/format';
+import { chartTooltipCurrency, chartTooltipPercent, formatCurrency, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -367,7 +367,7 @@ export default function EVAValuation() {
                         <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
                         <XAxis dataKey="year" tick={{ fill: '#8EA0BA', fontSize: 11 }} />
                         <YAxis tick={{ fill: '#8EA0BA', fontSize: 11 }} unit="%" />
-                        <Tooltip formatter={(v: number) => formatPercent(v)} />
+                        <Tooltip formatter={chartTooltipPercent} />
                         <Line type="monotone" dataKey="roic" stroke={ACCENT} strokeWidth={2} name="ROIC" dot={{ r: 3 }} />
                         <Line type="monotone" dataKey="wacc" stroke="#6F7F91" strokeWidth={2} strokeDasharray="4 4" name="WACC" dot={false} />
                       </LineChart>
@@ -382,7 +382,7 @@ export default function EVAValuation() {
                         <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
                         <XAxis dataKey="year" tick={{ fill: '#8EA0BA', fontSize: 11 }} />
                         <YAxis tick={{ fill: '#8EA0BA', fontSize: 10 }} tickFormatter={(v) => `$${(v / 1e9).toFixed(1)}B`} />
-                        <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                        <Tooltip formatter={chartTooltipCurrency()} />
                         <Line type="monotone" dataKey="efficiency" stroke="#FF7A90" strokeWidth={2} name="Efficiency" dot={false} />
                         <Line type="monotone" dataKey="base" stroke={ACCENT} strokeWidth={2} name="Base" dot={false} />
                         <Line type="monotone" dataKey="reinvestment" stroke="#4F8CFF" strokeWidth={2} name="Reinvestment" dot={false} />
@@ -398,7 +398,7 @@ export default function EVAValuation() {
                         <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
                         <XAxis dataKey="year" tick={{ fill: '#8EA0BA', fontSize: 11 }} />
                         <YAxis tick={{ fill: '#8EA0BA', fontSize: 10 }} tickFormatter={(v) => `$${(v / 1e9).toFixed(0)}B`} />
-                        <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                        <Tooltip formatter={chartTooltipCurrency()} />
                         <Line type="monotone" dataKey="base" stroke={ACCENT} strokeWidth={2} name="Base" dot={false} />
                         <Line type="monotone" dataKey="reinvestment" stroke="#4F8CFF" strokeWidth={2} name="Reinvestment" dot={false} />
                       </LineChart>
@@ -413,7 +413,7 @@ export default function EVAValuation() {
                         <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
                         <XAxis dataKey="step" tick={{ fill: '#8EA0BA', fontSize: 10 }} />
                         <YAxis tick={{ fill: '#8EA0BA', fontSize: 10 }} tickFormatter={(v) => `$${(v / 1e9).toFixed(1)}B`} />
-                        <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                        <Tooltip formatter={chartTooltipCurrency()} />
                         <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                           {result.charts.economicProfitWaterfall.map((entry) => (
                             <Cell key={entry.step} fill={entry.fill} />
@@ -431,7 +431,7 @@ export default function EVAValuation() {
                         <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
                         <XAxis dataKey="label" tick={{ fill: '#8EA0BA', fontSize: 9 }} />
                         <YAxis tick={{ fill: '#8EA0BA', fontSize: 10 }} tickFormatter={(v) => `$${(v / 1e9).toFixed(1)}B`} />
-                        <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                        <Tooltip formatter={chartTooltipCurrency()} />
                         <Bar dataKey="eva" fill={ACCENT} name="Current EVA" radius={[4, 4, 0, 0]} />
                         <Bar dataKey="cumulativeEva" fill="#4F8CFF" name="Cumulative EVA" radius={[4, 4, 0, 0]} />
                       </BarChart>

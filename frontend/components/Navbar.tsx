@@ -28,7 +28,7 @@ export default function Navbar() {
 
         <nav className="hidden items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.035] p-1 md:flex">
           {links.map((link) => {
-            const active = isActiveRoute(pathname, link.href);
+            const active = isActiveRoute(pathname ?? '', link.href);
 
             return (
               <Link
@@ -83,7 +83,7 @@ export default function Navbar() {
           >
             <div className="grid gap-2">
               {links.map((link) => {
-                const active = isActiveRoute(pathname, link.href);
+                const active = isActiveRoute(pathname ?? '', link.href);
 
                 return (
                   <Link

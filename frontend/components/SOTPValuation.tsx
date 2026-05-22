@@ -35,7 +35,7 @@ import NumberField from '@/components/forms/NumberField';
 import RangeField from '@/components/forms/RangeField';
 import Button from '@/components/ui/Button';
 import Panel from '@/components/ui/Panel';
-import { formatCurrency, formatMultiple, formatPercent } from '@/lib/format';
+import { chartTooltipCurrency, formatCurrency, formatMultiple, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -556,7 +556,7 @@ export default function SOTPValuation() {
                         <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
                         <XAxis dataKey="segment" tick={{ fill: '#8EA0BA', fontSize: 9 }} />
                         <YAxis tick={{ fill: '#8EA0BA', fontSize: 10 }} tickFormatter={(v) => `$${(v / 1e9).toFixed(0)}B`} />
-                        <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                        <Tooltip formatter={chartTooltipCurrency()} />
                         <Bar dataKey="discounted" fill="#FF7A90" radius={[4, 4, 0, 0]} name="Discounted" />
                         <Bar dataKey="base" fill={ACCENT} radius={[4, 4, 0, 0]} name="Base" />
                         <Bar dataKey="unlock" fill="#00C896" radius={[4, 4, 0, 0]} name="Unlock" />
@@ -583,7 +583,7 @@ export default function SOTPValuation() {
                             <Cell key={entry.segment} fill={entry.fill} stroke="transparent" />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                        <Tooltip formatter={chartTooltipCurrency()} />
                       </PieChart>
                     </ResponsiveContainer>
                   </ClientChart>
@@ -596,7 +596,7 @@ export default function SOTPValuation() {
                         <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
                         <XAxis dataKey="step" tick={{ fill: '#8EA0BA', fontSize: 8 }} interval={0} angle={-12} textAnchor="end" height={50} />
                         <YAxis tick={{ fill: '#8EA0BA', fontSize: 10 }} tickFormatter={(v) => `$${(v / 1e9).toFixed(0)}B`} />
-                        <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                        <Tooltip formatter={chartTooltipCurrency()} />
                         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                           {result.charts.navBridge.map((entry) => (
                             <Cell key={entry.step} fill={entry.fill} />
@@ -630,7 +630,7 @@ export default function SOTPValuation() {
                         <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
                         <XAxis dataKey="label" tick={{ fill: '#8EA0BA', fontSize: 10 }} />
                         <YAxis tick={{ fill: '#8EA0BA', fontSize: 11 }} />
-                        <Tooltip formatter={(v: number) => formatCurrency(v, false)} />
+                        <Tooltip formatter={chartTooltipCurrency(false)} />
                         <Bar dataKey="nav" fill={ACCENT} name="NAV / share" radius={[6, 6, 0, 0]} />
                         <Bar dataKey="marketPrice" fill="#6F7F91" name="Market" radius={[6, 6, 0, 0]} />
                       </BarChart>
