@@ -1,6 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import ModelingToolbar from '@/components/modeling/ModelingToolbar';
+import { useModelingWorkspace } from '@/hooks/useModelingWorkspace';
 import { useMutation } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -233,8 +235,25 @@ function ValuationCaseCard({
   );
 }
 
+const DEFAULT_COMPS_TARGET: CompsFinancials = {
+  ticker: 'PRIVATE',
+  companyName: 'Custom Company',
+  stockPrice: 100,
+  marketCap: 15_000_000_000,
+  enterpriseValue: 18_000_000_000,
+  revenue: 8_000_000_000,
+  ebitda: 2_000_000_000,
+  ebit: 1_600_000_000,
+  netIncome: 1_200_000_000,
+  cash: 2_000_000_000,
+  debt: 5_000_000_000,
+  sharesOutstanding: 150_000_000,
+  ebitdaMargin: 25,
+  revenueGrowth: 8,
+};
+
 export default function ComparableAnalysis() {
-  const [tickerQuery, setTickerQuery] = useState('');
+  const workspace = useModelingWorkspace('comps');
   const [peerInput, setPeerInput] = useState('');
   const [target, setTarget] = useState<CompsFinancials | null>(null);
   const [peerFinancials, setPeerFinancials] = useState<CompsFinancials[]>([]);
@@ -244,9 +263,20 @@ export default function ComparableAnalysis() {
     mutationFn: runCompsValuation,
   });
 
+  useEffect(() => {
+    if (workspace.preferences.inputMode !== 'manual' || target) return;
+    setTarget({
+      ...DEFAULT_COMPS_TARGET,
+      companyName: workspace.company.companyName || DEFAULT_COMPS_TARGET.companyName,
+      ticker: workspace.company.ticker || DEFAULT_COMPS_TARGET.ticker,
+    });
+  }, [workspace.preferences.inputMode, workspace.company.companyName, workspace.company.ticker, target]);
+
   const workspaceMutation = useMutation({
     mutationFn: fetchWorkspace,
     onSuccess: (data) => {
+      workspace.applyApiCompany(data.target as unknown as Record<string, unknown>);
+      workspace.setTickerQuery(data.target.ticker);
       setTarget(data.target);
       setPeerFinancials(data.peers);
       valuationMutation.reset();
@@ -338,39 +368,23 @@ export default function ComparableAnalysis() {
     >
       {/* LEFT — Analyst controls */}
       <div className="space-y-5 xl:sticky xl:top-24 xl:self-start">
+        <ModelingToolbar
+          workspace={workspace}
+          accent="#00C896"
+          title="Target company"
+          onFetch={() => workspaceMutation.mutate(workspace.tickerQuery)}
+          fetchPending={workspaceMutation.isPending}
+          fetchError={workspaceMutation.error?.message ?? null}
+        />
+
         <Panel className="overflow-hidden p-5">
           <div className="flex items-center justify-between gap-3">
             <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}>
-              <p className="text-xs uppercase tracking-[0.28em] text-[#4F8CFF]">Comps Terminal</p>
-              <h2 className="mt-2 text-xl font-semibold text-white">Target company</h2>
+              <p className="text-xs uppercase tracking-[0.28em] text-[#00C896]">Comps Terminal</p>
+              <h2 className="mt-2 text-xl font-semibold text-white">Peer set</h2>
             </motion.div>
-            <Sparkles size={18} className="text-[#4F8CFF]" />
+            <Sparkles size={18} className="text-[#00C896]" />
           </div>
-
-          <motion.div className="mt-5 flex gap-2">
-            <motion.div whileFocus={{ scale: 1.01 }} className="relative flex-1">
-              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6F7F91]" />
-              <input
-                value={tickerQuery}
-                onChange={(event) => setTickerQuery(event.target.value.toUpperCase())}
-                onKeyDown={(event) => event.key === 'Enter' && workspaceMutation.mutate(tickerQuery)}
-                placeholder="Enter ticker (e.g. AAPL)"
-                className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#070B14] pl-10 pr-3 text-sm text-white outline-none transition focus:border-[#4F8CFF]/50 focus:ring-2 focus:ring-[#4F8CFF]/20"
-              />
-            </motion.div>
-            <Button
-              type="button"
-              onClick={() => workspaceMutation.mutate(tickerQuery)}
-              disabled={workspaceMutation.isPending || !tickerQuery.trim()}
-              size="sm"
-            >
-              {workspaceMutation.isPending ? 'Loading…' : 'Load'}
-            </Button>
-          </motion.div>
-
-          {workspaceMutation.error ? (
-            <p className="mt-3 text-sm text-[#FF6B6B]">{workspaceMutation.error.message}</p>
-          ) : null}
 
           <AnimatePresence mode="wait">
             {target ? (

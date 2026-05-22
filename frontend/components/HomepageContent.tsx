@@ -89,34 +89,72 @@ async function fetchMarketNews(params: { category: NewsCategory; search: string 
   return response.json();
 }
 
-function MarketStrip({ indices }: { indices?: MarketIndex[] }) {
+function MarketStrip({
+  indices,
+  isLoading,
+  isError,
+  source,
+}: {
+  indices?: MarketIndex[];
+  isLoading?: boolean;
+  isError?: boolean;
+  source?: string;
+}) {
   const fallbackIndices = marketTicker.map((item) => ({
     symbol: item.symbol,
     price: Number(String(item.price).replace(/,/g, '')),
     change: item.change,
   }));
-  const source = indices?.length ? indices : fallbackIndices;
-  const tickerItems = [...source, ...source];
+  const isLive = Boolean(indices?.length) && !isError;
+  const display = isLive ? indices! : isError ? fallbackIndices : [];
+  const tickerItems = display.length ? [...display, ...display] : [];
 
   return (
     <section className="overflow-hidden border-y border-white/[0.08] bg-[#070B14]/80 py-4 backdrop-blur-xl">
+      <div className="mx-auto mb-3 flex max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#6F7F91]">Global indices</p>
+        {isLoading ? (
+          <span className="text-[10px] text-[#8EA0BA]">Updating…</span>
+        ) : isLive ? (
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#00C896]">
+            Live · {source === 'fmp' ? 'FMP' : 'Yahoo Finance'}
+          </span>
+        ) : isError ? (
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#F5B942]">Demo data · API unavailable</span>
+        ) : null}
+      </div>
       <div className="ticker-track flex w-max gap-3">
-        {tickerItems.map((item, index) => {
-          const positive = item.change >= 0;
+        {isLoading && !tickerItems.length
+          ? Array.from({ length: 8 }).map((_, index) => (
+              <div
+                key={`skeleton-${index}`}
+                className="h-[68px] min-w-[220px] animate-pulse rounded-lg border border-white/[0.08] bg-[#101725]/70"
+              />
+            ))
+          : tickerItems.map((item, index) => {
+              const positive = item.change >= 0;
 
-          return (
-            <div key={`${item.symbol}-${index}`} className="flex min-w-[220px] items-center justify-between gap-5 rounded-lg border border-white/[0.08] bg-[#101725]/70 px-4 py-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white">{item.symbol}</p>
-                <p className="mt-1 text-sm text-[#A1AAB8]">{formatDecimal(item.price, 2)}</p>
-              </div>
-              <span className={cn('rounded-full px-3 py-1 text-xs font-semibold', positive ? 'bg-[#00C896]/10 text-[#00C896]' : 'bg-[#FF5D5D]/10 text-[#FF5D5D]')}>
-                {positive ? '+' : ''}
-                {item.change.toFixed(2)}%
-              </span>
-            </div>
-          );
-        })}
+              return (
+                <div
+                  key={`${item.symbol}-${index}`}
+                  className="flex min-w-[220px] items-center justify-between gap-5 rounded-lg border border-white/[0.08] bg-[#101725]/70 px-4 py-3"
+                >
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white">{item.symbol}</p>
+                    <p className="mt-1 text-sm text-[#A1AAB8]">{formatDecimal(item.price, 2)}</p>
+                  </div>
+                  <span
+                    className={cn(
+                      'rounded-full px-3 py-1 text-xs font-semibold',
+                      positive ? 'bg-[#00C896]/10 text-[#00C896]' : 'bg-[#FF5D5D]/10 text-[#FF5D5D]',
+                    )}
+                  >
+                    {positive ? '+' : ''}
+                    {item.change.toFixed(2)}%
+                  </span>
+                </div>
+              );
+            })}
       </div>
     </section>
   );
@@ -141,8 +179,9 @@ export default function HomepageContent() {
   const indicesQuery = useQuery({
     queryKey: ['market-indices'],
     queryFn: fetchMarketIndices,
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
   });
   const gainers = moversQuery.data?.gainers?.length ? moversQuery.data.gainers.slice(0, 4) : topGainers;
   const losers = moversQuery.data?.losers?.length ? moversQuery.data.losers.slice(0, 4) : topLosers;
@@ -284,7 +323,12 @@ export default function HomepageContent() {
         </motion.div>
       </section>
 
-      <MarketStrip indices={indicesQuery.data?.indices} />
+      <MarketStrip
+        indices={indicesQuery.data?.indices}
+        isLoading={indicesQuery.isLoading}
+        isError={indicesQuery.isError}
+        source={indicesQuery.data?.source}
+      />
 
       <section className="mx-auto max-w-[1440px] px-4 py-20 sm:px-6 lg:px-8">
         <SectionHeader

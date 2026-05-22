@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { ArrowUpRight, BrainCircuit, RefreshCcw, Search, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, BrainCircuit } from 'lucide-react';
+import CompanyModelingPanel from '@/components/modeling/CompanyModelingPanel';
+import { useModelingWorkspace } from '@/hooks/useModelingWorkspace';
+import { companyProfileToDcfPayload } from '@/lib/financial-modeling';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import ChartFrame from '@/components/charts/ChartFrame';
 import ClientChart from '@/components/charts/ClientChart';
@@ -125,18 +128,33 @@ async function runDCF(payload: { companyData: CompanyData; assumptions: Record<S
 }
 
 export default function DCFCalculator() {
-  const [tickerQuery, setTickerQuery] = useState('NVDA');
   const [activeScenario, setActiveScenario] = useState<ScenarioKey>('base');
-  const [entryMode, setEntryMode] = useState<'auto' | 'manual'>('auto');
-  const [companyData, setCompanyData] = useState<CompanyData>(defaultCompanyData);
   const [assumptions, setAssumptions] = useState<Record<ScenarioKey, ScenarioAssumptions>>(defaultAssumptions);
+
+  const workspace = useModelingWorkspace('dcf', {
+    ticker: 'NVDA',
+    companyName: defaultCompanyData.companyName,
+    stockPrice: defaultCompanyData.currentPrice,
+    sharesOutstanding: defaultCompanyData.sharesOutstanding,
+    revenue: defaultCompanyData.revenue,
+    ebitda: defaultCompanyData.ebitda,
+    ebit: defaultCompanyData.ebit,
+    netIncome: defaultCompanyData.netIncome,
+    cash: defaultCompanyData.cash,
+    debt: defaultCompanyData.debt,
+    workingCapital: defaultCompanyData.workingCapital,
+    freeCashFlow: defaultCompanyData.freeCashFlow,
+    capex: defaultCompanyData.capex,
+    depreciationAndAmortization: defaultCompanyData.depreciationAndAmortization,
+    historicalRevenueGrowth: defaultCompanyData.historicalRevenueGrowth,
+    historicalEbitdaMargin: defaultCompanyData.historicalEbitdaMargin,
+    historicalEbitMargin: defaultCompanyData.historicalEbitMargin,
+    historicalFcfMargin: defaultCompanyData.historicalFcfMargin,
+  });
 
   const companyMutation = useMutation({
     mutationFn: fetchCompanyData,
-    onSuccess: (data) => {
-      setCompanyData(data);
-      setEntryMode('auto');
-    },
+    onSuccess: (data) => workspace.applyApiCompany(data as unknown as Record<string, unknown>),
   });
 
   const dcfMutation = useMutation({
@@ -144,13 +162,11 @@ export default function DCFCalculator() {
   });
 
   const result = dcfMutation.data;
+  const companyData = companyProfileToDcfPayload(workspace.company) as CompanyData;
 
   const currentAssumptions = assumptions[activeScenario];
   const setScenarioInput = (field: keyof ScenarioAssumptions, value: number) => {
     setAssumptions((prev) => ({ ...prev, [activeScenario]: { ...prev[activeScenario], [field]: value } }));
-  };
-  const setCompanyNumber = (field: keyof CompanyData, value: number) => {
-    setCompanyData((prev) => ({ ...prev, [field]: value }));
   };
 
   const runValuation = () => dcfMutation.mutate({ companyData, assumptions });
@@ -176,108 +192,14 @@ export default function DCFCalculator() {
   return (
     <div className="grid gap-5 xl:grid-cols-[430px_1fr]">
       <section className="grid gap-5 xl:sticky xl:top-24 xl:self-start">
-        <Panel className="p-5">
-          <p className="text-xs uppercase tracking-[0.24em] text-[#4F8CFF]">Section 1</p>
-          <h2 className="mt-2 text-xl font-semibold text-white">Company Data</h2>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setEntryMode('auto')}
-              className={cn(
-                'rounded-full border px-3 py-1.5 text-xs font-semibold transition',
-                entryMode === 'auto' ? 'border-[#4F8CFF]/40 bg-[#4F8CFF]/12 text-white' : 'border-white/[0.08] bg-[#070D19] text-[#A1AAB8]',
-              )}
-            >
-              Auto Fetch
-            </button>
-            <button
-              type="button"
-              onClick={() => setEntryMode('manual')}
-              className={cn(
-                'rounded-full border px-3 py-1.5 text-xs font-semibold transition',
-                entryMode === 'manual' ? 'border-[#4F8CFF]/40 bg-[#4F8CFF]/12 text-white' : 'border-white/[0.08] bg-[#070D19] text-[#A1AAB8]',
-              )}
-            >
-              Manual Entry
-            </button>
-            <span className="text-xs text-[#8EA0BA]">{entryMode === 'auto' ? 'Using latest API snapshot' : 'Analyst override mode enabled'}</span>
-          </div>
-          <div className="mt-4 flex items-center gap-2">
-            <div className="flex w-full items-center gap-2 rounded-lg border border-white/[0.08] bg-[#070D19] px-3 py-2">
-              <Search size={16} className="text-[#8EA0BA]" />
-              <input
-                value={tickerQuery}
-                onChange={(event) => setTickerQuery(event.target.value.toUpperCase())}
-                className="w-full bg-transparent text-sm text-white outline-none"
-                placeholder="Enter ticker (e.g. NVDA)"
-              />
-            </div>
-            <Button
-              type="button"
-              onClick={() => companyMutation.mutate(tickerQuery)}
-              disabled={companyMutation.isPending}
-              variant="secondary"
-            >
-              <RefreshCcw size={14} />
-              Refresh
-            </Button>
-          </div>
-          {entryMode === 'auto' ? (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              {[
-                ['Company Name', companyData.companyName],
-                ['Ticker', companyData.ticker],
-                ['Current Price', formatCurrency(companyData.currentPrice, false)],
-                ['Revenue', formatCurrency(companyData.revenue)],
-                ['EBITDA', formatCurrency(companyData.ebitda)],
-                ['EBIT', formatCurrency(companyData.ebit)],
-                ['Cash', formatCurrency(companyData.cash)],
-                ['Debt', formatCurrency(companyData.debt)],
-                ['Shares Outstanding', formatDecimal(companyData.sharesOutstanding, 0)],
-                ['Historical Growth', formatPercent(companyData.historicalRevenueGrowth)],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-lg border border-white/[0.08] bg-[#070D19] px-3 py-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-[#8EA0BA]">{label}</p>
-                  <p className="mt-2 text-sm font-semibold text-white">{value}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-4 grid gap-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-white/[0.08] bg-[#070D19] px-3 py-2">
-                  <p className="text-xs uppercase tracking-[0.18em] text-[#8EA0BA]">Company Name</p>
-                  <input
-                    value={companyData.companyName}
-                    onChange={(event) => setCompanyData((prev) => ({ ...prev, companyName: event.target.value }))}
-                    className="mt-2 w-full bg-transparent text-sm font-semibold text-white outline-none"
-                  />
-                </div>
-                <div className="rounded-lg border border-white/[0.08] bg-[#070D19] px-3 py-2">
-                  <p className="text-xs uppercase tracking-[0.18em] text-[#8EA0BA]">Ticker</p>
-                  <input
-                    value={companyData.ticker}
-                    onChange={(event) => setCompanyData((prev) => ({ ...prev, ticker: event.target.value.toUpperCase() }))}
-                    className="mt-2 w-full bg-transparent text-sm font-semibold text-white outline-none"
-                  />
-                </div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <NumberField label="Current Price" value={companyData.currentPrice} onChange={(value) => setCompanyNumber('currentPrice', value)} step={0.01} />
-                <NumberField label="Shares Outstanding" value={companyData.sharesOutstanding} onChange={(value) => setCompanyNumber('sharesOutstanding', value)} step={100_000} />
-                <NumberField label="Revenue" value={companyData.revenue} onChange={(value) => setCompanyNumber('revenue', value)} step={100_000_000} />
-                <NumberField label="EBITDA" value={companyData.ebitda} onChange={(value) => setCompanyNumber('ebitda', value)} step={50_000_000} />
-                <NumberField label="EBIT" value={companyData.ebit} onChange={(value) => setCompanyNumber('ebit', value)} step={50_000_000} />
-                <NumberField label="Cash" value={companyData.cash} onChange={(value) => setCompanyNumber('cash', value)} step={50_000_000} />
-                <NumberField label="Debt" value={companyData.debt} onChange={(value) => setCompanyNumber('debt', value)} step={50_000_000} />
-                <NumberField label="Working Capital" value={companyData.workingCapital} onChange={(value) => setCompanyNumber('workingCapital', value)} step={50_000_000} />
-                <NumberField label="Free Cash Flow" value={companyData.freeCashFlow} onChange={(value) => setCompanyNumber('freeCashFlow', value)} step={50_000_000} />
-                <NumberField label="CapEx" value={companyData.capex} onChange={(value) => setCompanyNumber('capex', value)} step={10_000_000} />
-                <NumberField label="Revenue Growth %" value={companyData.historicalRevenueGrowth} onChange={(value) => setCompanyNumber('historicalRevenueGrowth', value)} step={0.1} />
-              </div>
-            </div>
-          )}
-        </Panel>
+        <CompanyModelingPanel
+          workspace={workspace}
+          accent="#4F8CFF"
+          sectionLabel="Section 1"
+          onFetch={() => companyMutation.mutate(workspace.tickerQuery)}
+          fetchPending={companyMutation.isPending}
+          fetchError={companyMutation.error?.message ?? null}
+        />
 
         <Panel className="p-5">
           <p className="text-xs uppercase tracking-[0.24em] text-[#4F8CFF]">Section 2</p>

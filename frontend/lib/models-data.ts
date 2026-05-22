@@ -45,6 +45,7 @@ export const valuationModels = [
     useCases: ['Financial institutions', 'book-value driven equities', 'ROE normalization'],
     outputs: ['Equity value', 'residual income bridge', 'ROE sensitivity'],
     accent: '#8FB3FF',
+    href: '/models/rim',
   },
   {
     title: 'Precedent Transactions',
@@ -56,6 +57,7 @@ export const valuationModels = [
     useCases: ['M&A valuation', 'fairness analysis', 'take-private screening'],
     outputs: ['Transaction range', 'premium paid', 'control value'],
     accent: '#FF7A90',
+    href: '/models/precedent',
   },
   {
     title: 'Leveraged Buyout (LBO)',
@@ -66,7 +68,8 @@ export const valuationModels = [
     scenarios: ['Downside Exit', 'Base Exit', 'Upside Exit'],
     useCases: ['Sponsor deals', 'take-private screens', 'capital structure stress tests'],
     outputs: ['Sponsor IRR', 'MOIC', 'debt paydown', 'exit equity value'],
-    accent: '#A78BFA',
+    accent: '#7C5CFF',
+    href: '/models/lbo',
   },
   {
     title: 'Sum-of-the-Parts (SOTP)',
@@ -77,7 +80,8 @@ export const valuationModels = [
     scenarios: ['Discounted Holdco', 'Base Segments', 'Unlock Case'],
     useCases: ['Conglomerates', 'spin-offs', 'segment valuation debates'],
     outputs: ['Segment value bridge', 'holdco discount', 'per-share NAV'],
-    accent: '#22D3EE',
+    accent: '#00C2FF',
+    href: '/models/sotp',
   },
   {
     title: 'Economic Value Added (EVA)',
@@ -88,7 +92,8 @@ export const valuationModels = [
     scenarios: ['Efficiency Reset', 'Base NOPAT', 'Reinvestment Case'],
     useCases: ['Industrial businesses', 'capital allocators', 'margin and ROIC studies'],
     outputs: ['EVA bridge', 'invested capital returns', 'ROIC spread'],
-    accent: '#34D399',
+    accent: '#00E5A8',
+    href: '/models/eva',
   },
   {
     title: 'Quantitative Factor Engine',
@@ -99,17 +104,7 @@ export const valuationModels = [
     scenarios: ['Quality Tilt', 'Value Tilt', 'Momentum Tilt'],
     useCases: ['Screening', 'factor research', 'portfolio construction'],
     outputs: ['Composite score', 'factor ranks', 'screened universe'],
-    accent: '#38BDF8',
-  },
-  {
-    title: 'AI Intrinsic Value Engine',
-    shortTitle: 'AI Value',
-    tagline: 'AI-assisted valuation narrative and range synthesis.',
-    description: 'Combines model outputs, market context, and research signals into an explainable intrinsic value range.',
-    formulas: ['Value Range = Weighted Model Ensemble', 'Confidence = Signal Quality x Data Completeness'],
-    scenarios: ['Conservative AI', 'Balanced AI', 'Aggressive AI'],
-    useCases: ['Research memo drafting', 'valuation triangulation', 'investment committee prep'],
-    outputs: ['Intrinsic value range', 'confidence score', 'AI analyst commentary'],
-    accent: '#F472B6',
+    accent: '#7C5CFF',
+    href: '/models/factors',
   },
 ];

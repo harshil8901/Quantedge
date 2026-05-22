@@ -106,31 +106,45 @@ export const fetchYahooSnapshot = async (ticker: string): Promise<YahooSnapshot>
   };
 };
 
+const YAHOO_CHART_HEADERS = { 'User-Agent': 'Mozilla/5.0 (compatible; QuantEdge/1.0)' };
+
+const fetchYahooChartIndex = async (symbol: string): Promise<{ price: number; change: number } | null> => {
+  try {
+    const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`, {
+      params: { interval: '1d', range: '1d' },
+      headers: YAHOO_CHART_HEADERS,
+      timeout: 12_000,
+    });
+    const meta = response.data?.chart?.result?.[0]?.meta;
+    if (!meta) return null;
+
+    const price = toNumber(meta.regularMarketPrice);
+    const previousClose = toNumber(meta.chartPreviousClose);
+    if (price <= 0) return null;
+
+    const change =
+      toNumber(meta.regularMarketChangePercent) ||
+      (previousClose > 0 ? ((price - previousClose) / previousClose) * 100 : 0);
+
+    return { price, change: Number(change.toFixed(2)) };
+  } catch {
+    return null;
+  }
+};
+
 export const fetchYahooIndicesSnapshot = async (): Promise<YahooIndicesSnapshot> => {
-  const symbols = GLOBAL_INDICES.map((item) => item.symbol).join(',');
-  const quoteRes = await axios.get('https://query1.finance.yahoo.com/v7/finance/quote', {
-    params: { symbols },
-    headers: { 'User-Agent': 'Mozilla/5.0' },
-  });
+  const settled = await Promise.all(
+    GLOBAL_INDICES.map(async ({ symbol, label }) => {
+      const quote = await fetchYahooChartIndex(symbol);
+      if (!quote) return null;
+      return { symbol: label, price: quote.price, change: quote.change };
+    }),
+  );
 
-  const results = Array.isArray(quoteRes.data?.quoteResponse?.result) ? quoteRes.data.quoteResponse.result : [];
-  const bySymbol = new Map<string, Record<string, unknown>>();
-  results.forEach((item: Record<string, unknown>) => {
-    const symbol = String(item.symbol || '');
-    if (symbol) bySymbol.set(symbol, item);
-  });
-
-  const indices = GLOBAL_INDICES.map(({ symbol, label }) => {
-    const quote = bySymbol.get(symbol) || {};
-    return {
-      symbol: label,
-      price: toNumber(quote.regularMarketPrice),
-      change: toNumber(quote.regularMarketChangePercent),
-    };
-  }).filter((item) => item.price > 0);
+  const indices = settled.filter((item): item is IndexSnapshot => item !== null);
 
   if (!indices.length) {
-    throw new Error('Yahoo Finance indices quote not found.');
+    throw new Error('Yahoo Finance chart feed returned no index quotes.');
   }
 
   return {

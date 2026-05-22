@@ -1,9 +1,11 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import ModelingToolbar from '@/components/modeling/ModelingToolbar';
+import { useModelingWorkspace } from '@/hooks/useModelingWorkspace';
 import { useMutation } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BrainCircuit, RefreshCcw, Search, Sparkles, TrendingUp } from 'lucide-react';
+import { BrainCircuit, RefreshCcw, Sparkles, TrendingUp } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -95,6 +97,26 @@ type WorkspaceResponse = {
   company: DDMCompanyInputs;
   historical: DDMHistoricalPoint[];
   suggestedAssumptions: Record<DDMScenarioKey, DDMScenarioAssumptions>;
+};
+
+const DEFAULT_DDM_ASSUMPTIONS: Record<DDMScenarioKey, DDMScenarioAssumptions> = {
+  bear: { dividendGrowth: 2, costOfEquity: 11, stableGrowth: 1.5, forecastYears: 5 },
+  base: { dividendGrowth: 5, costOfEquity: 9, stableGrowth: 3, forecastYears: 5 },
+  bull: { dividendGrowth: 8, costOfEquity: 8, stableGrowth: 4, forecastYears: 5 },
+};
+
+const DEFAULT_DDM_COMPANY: DDMCompanyInputs = {
+  ticker: 'PRIVATE',
+  companyName: 'Custom Company',
+  currentPrice: 100,
+  marketCap: 10_000_000_000,
+  beta: 1,
+  dividendPerShare: 2.5,
+  dividendYield: 2.5,
+  payoutRatio: 40,
+  eps: 6,
+  netIncome: 600_000_000,
+  sharesOutstanding: 100_000_000,
 };
 
 const SCENARIO_META: Array<{ key: DDMScenarioKey; label: string; accent: string }> = [
@@ -194,15 +216,27 @@ async function runDDMValuation(payload: {
 }
 
 export default function DDMValuation() {
-  const [tickerQuery, setTickerQuery] = useState('');
+  const workspace = useModelingWorkspace('ddm');
   const [company, setCompany] = useState<DDMCompanyInputs | null>(null);
   const [historical, setHistorical] = useState<DDMHistoricalPoint[]>([]);
   const [assumptions, setAssumptions] = useState<Record<DDMScenarioKey, DDMScenarioAssumptions> | null>(null);
   const [activeScenario, setActiveScenario] = useState<DDMScenarioKey>('base');
 
+  useEffect(() => {
+    if (workspace.preferences.inputMode !== 'manual' || company) return;
+    setCompany({
+      ...DEFAULT_DDM_COMPANY,
+      companyName: workspace.company.companyName || DEFAULT_DDM_COMPANY.companyName,
+      ticker: workspace.company.ticker || DEFAULT_DDM_COMPANY.ticker,
+    });
+    setAssumptions(DEFAULT_DDM_ASSUMPTIONS);
+  }, [workspace.preferences.inputMode, workspace.company.companyName, workspace.company.ticker, company]);
+
   const workspaceMutation = useMutation({
     mutationFn: fetchWorkspace,
     onSuccess: (data) => {
+      workspace.applyApiCompany(data.company as unknown as Record<string, unknown>);
+      workspace.setTickerQuery(data.company.ticker);
       setCompany(data.company);
       setHistorical(data.historical);
       setAssumptions(data.suggestedAssumptions);
@@ -248,39 +282,23 @@ export default function DDMValuation() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid gap-6 xl:grid-cols-[400px_1fr]">
       <motion.div className="space-y-5 xl:sticky xl:top-24 xl:self-start">
+        <ModelingToolbar
+          workspace={workspace}
+          accent="#F5B942"
+          title="Target company"
+          onFetch={() => workspaceMutation.mutate(workspace.tickerQuery)}
+          fetchPending={workspaceMutation.isPending}
+          fetchError={workspaceMutation.error?.message ?? null}
+        />
+
         <Panel className="overflow-hidden p-5">
           <motion.div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.28em] text-[#F5B942]">DDM Terminal</p>
-              <h2 className="mt-2 text-xl font-semibold text-white">Target company</h2>
+              <h2 className="mt-2 text-xl font-semibold text-white">Dividend inputs</h2>
             </div>
             <Sparkles size={18} className="text-[#F5B942]" />
           </motion.div>
-
-          <div className="mt-5 flex gap-2">
-            <motion.div className="relative flex-1">
-              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6F7F91]" />
-              <input
-                value={tickerQuery}
-                onChange={(event) => setTickerQuery(event.target.value.toUpperCase())}
-                onKeyDown={(event) => event.key === 'Enter' && workspaceMutation.mutate(tickerQuery)}
-                placeholder="Enter ticker (e.g. KO)"
-                className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#070B14] pl-10 pr-3 text-sm text-white outline-none transition focus:border-[#F5B942]/50 focus:ring-2 focus:ring-[#F5B942]/20"
-              />
-            </motion.div>
-            <Button
-              type="button"
-              onClick={() => workspaceMutation.mutate(tickerQuery)}
-              disabled={workspaceMutation.isPending || !tickerQuery.trim()}
-              size="sm"
-            >
-              {workspaceMutation.isPending ? 'Loading…' : 'Load'}
-            </Button>
-          </div>
-
-          {workspaceMutation.error ? (
-            <p className="mt-3 text-sm text-[#FF6B6B]">{workspaceMutation.error.message}</p>
-          ) : null}
 
           <AnimatePresence mode="wait">
             {company ? (

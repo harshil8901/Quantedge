@@ -11,7 +11,6 @@ const links = [
   { label: 'Home', href: '/' },
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Models', href: '/models' },
-  { label: 'Watchlist', href: '/watchlist' },
 ];
 
 const isActiveRoute = (pathname: string, href: string) => (href === '/' ? pathname === href : pathname.startsWith(href));
